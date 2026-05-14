@@ -13,27 +13,27 @@ class GoalSeeder extends Seeder
      */
     public function run(): void
     {
-        Goal::create([
+        Goal::firstOrCreate([
             'title' => 'eat',
             'body' => 'eat healthy',
         ]);
 
-        Goal::create([
+        Goal::firstOrCreate([
             'title' => 'alcool',
             'body' => 'zero alcool',
         ]);
 
-        Goal::create([
+        Goal::firstOrCreate([
             'title' => 'outdoor_sport_session',
             'body' => 'outdoor sport session ( minimum 30 minutes )',
         ]);
 
-        Goal::create([
+        Goal::firstOrCreate([
             'title' => 'indoor_sport_session',
             'body' => 'indoor sport session ( minimum 30 minutes )',
         ]);
 
-        Goal::create([
+        Goal::firstOrCreate([
             'title' => 'water',
             'body' => 'drink 3 liters of water',
         ]);
