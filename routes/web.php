@@ -12,7 +12,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [DayController::class, 'index'])
         ->middleware(['auth', 'verified', UserHaveChallenge::class])
         ->name('dashboard');
+
     Route::patch('/days/{day}/validate', [DayController::class, 'validate']);
+    Route::get('/days', [DayController::class, 'calendar'])->name('days.calendar');
+    Route::get('/days/{date}', [DayController::class, 'show'])->name('days.show');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -24,7 +27,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     Route::patch('/days/{day}/goals/{goal}/toggle', [DayGoalController::class, 'toggle']);
-
 });
 
 

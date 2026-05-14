@@ -5,7 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\Day;
 use App\Models\DayGoal;
 use App\Models\Goal;
+use Carbon\Carbon;
+use Carbon\CarbonPeriod;
 use Illuminate\Http\Request;
+use Str;
 use function Laravel\Prompts\error;
 
 class DayController extends Controller
@@ -53,9 +56,28 @@ class DayController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Day $day)
+    public function show($dayParam)
     {
-        //
+        if (Str::isUuid($dayParam)) {
+            $day = Day::findOrFail($dayParam);
+            $dayGoals = $day->goals()->withPivot('completed')->get();
+        } else {
+            $day = Day::firstOrCreate([
+                'user_id' => auth()->id(),
+                'date' => $dayParam,
+            ]);
+
+            $goals = Goal::where('user_id',  null)->get();
+
+            foreach ($goals as $goal) {
+                DayGoal::create(['day_id' => $day->id, 'goal_id' => $goal->id]);
+            }
+
+            $dayGoals = $day->goals()->withPivot('completed')->get();
+
+        }
+
+        return view('days.show', compact('day', 'dayGoals'));
     }
 
     /**
@@ -93,5 +115,20 @@ class DayController extends Controller
         }
 
         return response('nul');
+    }
+
+    public function calendar()
+    {
+        $user = auth()->user();
+        $startDate = $user->challenge->start_date;
+        $userDays = $user->days->mapWithKeys(fn($day) => [
+            $day->date => [
+                'id' => $day->id,
+                'is_validated' => $day->is_validated,
+            ]
+        ])->toArray();
+        $dates = CarbonPeriod::create($startDate, now())->toArray();
+
+        return view('days.calendar', compact('dates', 'userDays', 'startDate'));
     }
 }

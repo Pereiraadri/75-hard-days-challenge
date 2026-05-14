@@ -1,136 +1,93 @@
-{{-- resources/views/dashboard.blade.php --}}
+{{-- resources/views/days/show.blade.php --}}
 <x-app-layout>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap');
 
-        * {
-            box-sizing: border-box;
-        }
+        * { box-sizing: border-box; }
 
         .page {
             font-family: 'DM Sans', sans-serif;
             background: #0e0e0e;
             min-height: 100vh;
-            padding: 24px 16px 48px;
+            padding: 24px 16px 60px;
             color: #fff;
         }
 
-        /* ── Header ── */
-        .header {
-            display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
-            margin-bottom: 28px;
-        }
-
-        .greeting {
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
             font-size: 13px;
             color: #555;
-            letter-spacing: .08em;
-            text-transform: uppercase;
-            margin-bottom: 4px;
+            text-decoration: none;
+            margin-bottom: 20px;
+            transition: color .2s;
         }
 
-        .title {
-            font-family: 'Bebas Neue', sans-serif;
-            font-size: 52px;
-            line-height: 1;
-            color: #fff;
-            letter-spacing: .02em;
-        }
+        .back-link:hover { color: #ff6b35; }
 
-        .title span {
-            background: linear-gradient(135deg, #ff6b35, #f7c948);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .day-counter {
-            text-align: right;
+        /* ── Header ── */
+        .day-header {
+            margin-bottom: 28px;
         }
 
         .day-number {
             font-family: 'Bebas Neue', sans-serif;
-            font-size: 48px;
+            font-size: 72px;
             line-height: 1;
+            color: #fff;
+        }
+
+        .day-number span {
             background: linear-gradient(135deg, #ff6b35, #f7c948);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
 
-        .day-label {
-            font-size: 11px;
+        .day-date-label {
+            font-size: 13px;
             color: #444;
-            text-transform: uppercase;
-            letter-spacing: .1em;
+            margin-top: 2px;
+            text-transform: capitalize;
         }
 
-        /* ── Progress ── */
-        .progress-wrap {
-            margin-bottom: 28px;
-        }
-
-        .progress-meta {
-            display: flex;
-            justify-content: space-between;
-            font-size: 12px;
-            color: #444;
-            margin-bottom: 8px;
-        }
-
-        .progress-track {
-            height: 3px;
-            background: #1e1e1e;
-            border-radius: 99px;
-            overflow: hidden;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #ff6b35, #f7c948);
-            border-radius: 99px;
-            transition: width .8s cubic-bezier(.16, 1, .3, 1);
-        }
-
-        /* ── Date chip ── */
-        .date-chip {
+        /* Status badge */
+        .status-badge {
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            background: #1a1a1a;
-            border: 1px solid #222;
-            border-radius: 99px;
             padding: 6px 14px;
+            border-radius: 99px;
             font-size: 12px;
-            color: #666;
-            margin-bottom: 24px;
+            margin-top: 12px;
         }
 
-        .date-chip .dot {
+        .status-validated {
+            background: #162519;
+            border: 1px solid #2d5a38;
+            color: #4ade80;
+        }
+
+        .status-pending {
+            background: #1a1610;
+            border: 1px solid #3a2810;
+            color: #f7c948;
+        }
+
+        .status-dot {
             width: 6px;
             height: 6px;
             border-radius: 50%;
-            background: #ff6b35;
-            animation: pulse 2s infinite;
+            background: currentColor;
         }
 
-        @keyframes pulse {
-            0%, 100% {
-                opacity: 1;
-            }
-            50% {
-                opacity: .3;
-            }
-        }
-
-        /* ── Goal Cards ── */
+        /* ── Goals ── */
         .goals-list {
             display: flex;
             flex-direction: column;
             gap: 10px;
-            margin-bottom: 32px;
+            margin-bottom: 28px;
         }
 
         .goal-card {
@@ -141,27 +98,17 @@
             display: flex;
             align-items: center;
             gap: 16px;
-            cursor: pointer;
             transition: border-color .2s, background .2s, transform .15s;
             position: relative;
             overflow: hidden;
         }
 
-        .goal-card:active {
-            transform: scale(.98);
-        }
+        .goal-card.clickable { cursor: pointer; }
+        .goal-card.clickable:active { transform: scale(.98); }
 
         .goal-card.done {
             background: #111a13;
             border-color: #1e3320;
-        }
-
-        .goal-card.done::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(135deg, rgba(74, 222, 128, .03), transparent);
-            pointer-events: none;
         }
 
         .goal-emoji {
@@ -176,14 +123,9 @@
             border-radius: 12px;
         }
 
-        .goal-card.done .goal-emoji {
-            background: #162519;
-        }
+        .goal-card.done .goal-emoji { background: #162519; }
 
-        .goal-info {
-            flex: 1;
-            min-width: 0;
-        }
+        .goal-info { flex: 1; min-width: 0; }
 
         .goal-title {
             font-size: 15px;
@@ -192,9 +134,7 @@
             margin-bottom: 2px;
         }
 
-        .goal-card.done .goal-title {
-            color: #4ade80;
-        }
+        .goal-card.done .goal-title { color: #4ade80; }
 
         .goal-body {
             font-size: 12px;
@@ -224,7 +164,7 @@
         .check-icon {
             opacity: 0;
             transform: scale(0);
-            transition: all .2s cubic-bezier(.34, 1.56, .64, 1);
+            transition: all .2s cubic-bezier(.34,1.56,.64,1);
         }
 
         .goal-card.done .check-icon {
@@ -232,7 +172,9 @@
             transform: scale(1);
         }
 
-        /* ── Score Card ── */
+        .goal-card.locked { pointer-events: none; opacity: .7; }
+
+        /* ── Score ── */
         .score-card {
             background: #141414;
             border: 1px solid #1e1e1e;
@@ -241,6 +183,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
+            margin-bottom: 16px;
         }
 
         .score-label {
@@ -258,57 +201,14 @@
             color: #fff;
         }
 
-        .score-max {
-            font-size: 16px;
-            color: #333;
-        }
+        .score-max { font-size: 16px; color: #333; }
 
-        .score-ring {
-            width: 64px;
-            height: 64px;
-            transform: rotate(-90deg);
-        }
-
-        /* ── Animations ── */
-        @keyframes fadeUp {
-            from {
-                opacity: 0;
-                transform: translateY(16px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .goal-card {
-            animation: fadeUp .4s ease both;
-        }
-
-        .goal-card:nth-child(1) {
-            animation-delay: .05s;
-        }
-
-        .goal-card:nth-child(2) {
-            animation-delay: .10s;
-        }
-
-        .goal-card:nth-child(3) {
-            animation-delay: .15s;
-        }
-
-        .goal-card:nth-child(4) {
-            animation-delay: .20s;
-        }
-
-        .goal-card:nth-child(5) {
-            animation-delay: .25s;
-        }
+        .score-ring { width: 64px; height: 64px; transform: rotate(-90deg); }
 
         /* ── Validate button ── */
         .validate-btn {
             width: 100%;
-            margin-top: 16px;
+            margin-top: 4px;
             padding: 16px;
             border-radius: 16px;
             border: none;
@@ -323,12 +223,10 @@
 
         .validate-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(255, 107, 53, .3);
+            box-shadow: 0 8px 24px rgba(255,107,53,.3);
         }
 
-        .validate-btn:active {
-            transform: scale(.98);
-        }
+        .validate-btn:active { transform: scale(.98); }
 
         .validate-btn.validated {
             background: #1a1a1a;
@@ -339,64 +237,44 @@
             box-shadow: none;
         }
 
-        .goal-card.locked {
-            pointer-events: none;
-            opacity: .7;
+        /* ── Animations ── */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: translateY(0); }
         }
+
+        .goal-card { animation: fadeUp .4s ease both; }
+        .goal-card:nth-child(1) { animation-delay: .05s; }
+        .goal-card:nth-child(2) { animation-delay: .10s; }
+        .goal-card:nth-child(3) { animation-delay: .15s; }
+        .goal-card:nth-child(4) { animation-delay: .20s; }
+        .goal-card:nth-child(5) { animation-delay: .25s; }
     </style>
 
     <div class="page">
 
+        {{-- Back --}}
+        <a href="{{ route('days.calendar') }}" class="back-link">← Calendrier</a>
+
         {{-- Header --}}
-        <div class="header">
-            <div>
-                <p class="greeting">Bonjour, {{ auth()->user()->first_name }} 👋</p>
-                <h1 class="title">75 <span>Hard</span></h1>
+        @php
+            $dayNumber = \Carbon\Carbon::parse(auth()->user()->challenge->start_date)->diffInDays($day->date) + 1;
+            $completed = $dayGoals->filter(fn($g) => $g->pivot->completed)->count();
+            $total = $dayGoals->count();
+            $circumference = 2 * pi() * 26;
+            $offset = $total > 0 ? $circumference - (($completed / $total) * $circumference) : $circumference;
+        @endphp
+
+        <div class="day-header">
+            <div class="day-number">Jour <span>{{ $dayNumber }}</span></div>
+            <div class="day-date-label">
+                {{ \Carbon\Carbon::parse($day->date)->locale('fr')->isoFormat('dddd D MMMM YYYY') }}
             </div>
-            <div class="day-counter">
-                @php
-                    $dayNumber = \Carbon\Carbon::parse(auth()->user()->challenge->start_date)->diffInDays(today()) + 1;
-                @endphp
-                <div class="day-number">{{ $dayNumber }}</div>
-                <div class="day-label">/ 75 jours</div>
+            <div class="status-badge {{ $day->is_validated ? 'status-validated' : 'status-pending' }}">
+                <span class="status-dot"></span>
+                {{ $day->is_validated ? 'Journée validée' : 'En cours' }}
             </div>
         </div>
-
-        {{-- Progress bar --}}
-        @php $pct = round(($dayNumber / 75) * 100); @endphp
-        <div class="progress-wrap">
-            <div class="progress-meta">
-                <span>Progression</span>
-                <span>{{ $pct }}%</span>
-            </div>
-            <div class="progress-track">
-                <div class="progress-fill" style="width: {{ $pct }}%"></div>
-            </div>
-        </div>
-
-        {{-- Date chip --}}
-        <div class="date-chip">
-            <span class="dot"></span>
-            {{ \Carbon\Carbon::today()->locale('fr')->isoFormat('dddd D MMMM') }}
-        </div>
-
-        <a href="{{ route('days.calendar') }}" style="
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: #141414;
-    border: 1px solid #1e1e1e;
-    border-radius: 99px;
-    padding: 8px 16px;
-    font-size: 13px;
-    color: #666;
-    text-decoration: none;
-    margin-bottom: 24px;
-    transition: border-color .2s, color .2s;
-" onmouseover="this.style.borderColor='#ff6b35';this.style.color='#fff'"
-           onmouseout="this.style.borderColor='#1e1e1e';this.style.color='#666'">
-            📅 Voir mes jours
-        </a>
 
         {{-- Goals --}}
         <div class="goals-list">
@@ -406,10 +284,12 @@
             @endphp
 
             @foreach($dayGoals as $goal)
-                @php $completed = $goal->pivot->completed; @endphp
+                @php $isCompleted = $goal->pivot->completed; @endphp
                 <div
-                    class="goal-card {{ $completed ? 'done' : '' }} {{ $day->is_validated ? 'locked' : '' }}"
-                    onclick="{{ $day->is_validated ? '' : "toggleGoal('{$goal->pivot->day_id}', '{$goal->id}', this)" }}"
+                    class="goal-card {{ $isCompleted ? 'done' : '' }} {{ $day->is_validated ? 'locked' : 'clickable' }}"
+                    @if(!$day->is_validated)
+                        onclick="toggleGoal('{{ $goal->pivot->day_id }}', '{{ $goal->id }}', this)"
+                    @endif
                 >
                     <div class="goal-emoji">{{ $emojis[$i++] }}</div>
                     <div class="goal-info">
@@ -418,26 +298,17 @@
                     </div>
                     <div class="goal-check">
                         <svg class="check-icon" width="13" height="10" viewBox="0 0 13 10" fill="none">
-                            <path d="M1 5L5 9L12 1" stroke="#0e0e0e" stroke-width="2.2" stroke-linecap="round"
-                                  stroke-linejoin="round"/>
+                            <path d="M1 5L5 9L12 1" stroke="#0e0e0e" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                     </div>
                 </div>
             @endforeach
         </div>
 
-        {{-- Score card --}}
-        @php
-            $completed = $dayGoals->filter(fn($g) => $g->pivot->completed)->count();
-            $total = $dayGoals->count();
-            $ringPct = $total > 0 ? round(($completed / $total) * 100) : 0;
-            $circumference = 2 * pi() * 26;
-            $offset = $circumference - ($ringPct / 100) * $circumference;
-        @endphp
-
+        {{-- Score --}}
         <div class="score-card">
             <div>
-                <div class="score-label">Aujourd'hui</div>
+                <div class="score-label">Score du jour</div>
                 <div class="score-value" id="score-value">
                     {{ $completed }} <span class="score-max">/ {{ $total }}</span>
                 </div>
@@ -464,7 +335,7 @@
             </svg>
         </div>
 
-        {{-- Validate button --}}
+        {{-- Validate --}}
         @if($day->is_validated)
             <button class="validate-btn validated" disabled>✓ Journée validée</button>
         @else
@@ -500,8 +371,8 @@
                 `${completed} <span class="score-max">/ ${total}</span>`;
 
             const pct = total > 0 ? completed / total : 0;
-            const offset = CIRCUMFERENCE - (pct * CIRCUMFERENCE);
-            document.querySelector('#progress-circle').style.strokeDashoffset = offset;
+            document.querySelector('#progress-circle').style.strokeDashoffset =
+                CIRCUMFERENCE - (pct * CIRCUMFERENCE);
         }
 
         async function validateDay(dayId, btn) {
