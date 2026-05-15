@@ -225,7 +225,7 @@
         @php
             $total = count($dates);
             $validated = collect($userDays)->filter(fn($v) => $v['is_validated'] ?? false)->count();
-            $daysPassed = collect($dates)->filter(fn($d) => $d->isPast() && !$d->isToday())->count();
+            $daysPassed = collect($dates)->filter(fn($d) => $d->isPast() && !$d->isToday())->count() + 1;
             $missed = $daysPassed - $validated;
         @endphp
 
