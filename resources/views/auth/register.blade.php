@@ -161,7 +161,7 @@
         <p class="register-sub">Crée ton compte pour commencer</p>
 
         <div class="register-card">
-            <form method="POST" action="{{ route('register') }}" onsubmit="this.querySelector('button[type=submit]').disabled = true;">
+            <form method="POST" action="{{ route('register') }}">
                 @csrf
 
                 <div class="field-row">
@@ -179,19 +179,19 @@
 
                 <div class="field">
                     <label for="email">Email</label>
-                    <input type="email" id="email" name="email" value="{{ old('email') }}" required/>
+                    <input type="email" id="email" name="email" value="{{ old('email') }}" required autocomplete="username"/>
                     @error('email')<p class="error-msg">{{ $message }}</p>@enderror
                 </div>
 
                 <div class="field">
                     <label for="password">Mot de passe</label>
-                    <input type="password" id="password" name="password" required/>
+                    <input type="password" id="password" name="password" required autocomplete="new-password"/>
                     @error('password')<p class="error-msg">{{ $message }}</p>@enderror
                 </div>
 
                 <div class="field">
                     <label for="password_confirmation">Confirmer le mot de passe</label>
-                    <input type="password" id="password_confirmation" name="password_confirmation" required/>
+                    <input type="password" id="password_confirmation" name="password_confirmation" required autocomplete="new-password"/>
                 </div>
 
                 <button type="submit" class="btn-register">Créer mon compte →</button>
