@@ -117,6 +117,14 @@ class DayController extends Controller
         return response('nul');
     }
 
+    public function unvalidate(Day $day)
+    {
+        if ($day->user_id === auth()->id()) {
+            $day->update(['is_validated' => false]);
+            return response()->json(['success' => true]);
+        }
+    }
+
     public function calendar()
     {
         $user = auth()->user();
@@ -130,5 +138,28 @@ class DayController extends Controller
         $dates = CarbonPeriod::create($startDate, now())->toArray();
 
         return view('days.calendar', compact('dates', 'userDays', 'startDate'));
+    }
+
+    public function stats()
+    {
+        $totalPossible = DayGoal::whereHas('day', fn($q) =>
+        $q->where('user_id', auth()->id())
+        )->count();
+
+        $totalCompleted = DayGoal::whereHas('day', fn($q) =>
+        $q->where('user_id', auth()->id())
+        )->where('completed', true)->count();
+
+        $byGoal = Goal::whereNull('user_id')->get()->map(function($goal) {
+            $dayGoals = DayGoal::where('goal_id', $goal->id)
+                ->whereHas('day', fn($q) => $q->where('user_id', auth()->id()))
+                ->get();
+
+            $goal->total = $dayGoals->count();
+            $goal->completed = $dayGoals->where('completed', true)->count();
+            return $goal;
+        });
+
+        return view('days.stats', compact('totalPossible', 'totalCompleted', 'byGoal'));
     }
 }

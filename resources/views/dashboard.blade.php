@@ -355,10 +355,29 @@
             </div>
             <div class="day-counter">
                 @php
-                    $dayNumber = \Carbon\Carbon::parse(auth()->user()->challenge->start_date)->diffInDays(today()) + 1;
+                    $startDate = \Carbon\Carbon::parse(auth()->user()->challenge->start_date)->startOfDay();
+                    $today = today();
+
+                    $dayNumber = $startDate->diffInDays($today, false) + 1;
+
+                    $waitingMessage = null;
+
+                    if ($dayNumber <= 0) {
+                        $daysLeft = $today->diffInDays($startDate);
+                        $plural = $daysLeft > 1 ? 's' : '';
+                        $waitingMessage = "A dans {$daysLeft} jour{$plural}";
+                    }
                 @endphp
-                <div class="day-number">{{ $dayNumber }}</div>
-                <div class="day-label">/ 75 jours</div>
+
+                {{-- Affichage --}}
+                @if ($waitingMessage)
+                    <!-- Le challenge n'a pas commencé -->
+                    <div class="day-number">{{ $waitingMessage }}</div>
+                @else
+                    <!-- Le challenge est en cours -->
+                    <div class="day-number">{{ $dayNumber }}</div>
+                    <div class="day-label">/ 75 jours</div>
+                @endif
             </div>
         </div>
 
@@ -398,6 +417,24 @@
             📅 Voir mes jours
         </a>
 
+        <a href="{{ route('days.stats') }}" style="
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #141414;
+    border: 1px solid #1e1e1e;
+    border-radius: 99px;
+    padding: 8px 16px;
+    font-size: 13px;
+    color: #666;
+    text-decoration: none;
+    margin-bottom: 24px;
+    transition: border-color .2s, color .2s;
+" onmouseover="this.style.borderColor='#ff6b35';this.style.color='#fff'"
+           onmouseout="this.style.borderColor='#1e1e1e';this.style.color='#666'">
+            📊 Voir mes stats
+        </a>
+
         {{-- Goals --}}
         <div class="goals-list">
             @php
@@ -413,7 +450,7 @@
                 >
                     <div class="goal-emoji">{{ $emojis[$i++] }}</div>
                     <div class="goal-info">
-                        <div class="goal-title">{{ $goal->title }}</div>
+                        <div class="goal-title">{{ Str::replace('_', ' ', ucfirst($goal->title)) }}</div>
                         <div class="goal-body">{{ $goal->body }}</div>
                     </div>
                     <div class="goal-check">

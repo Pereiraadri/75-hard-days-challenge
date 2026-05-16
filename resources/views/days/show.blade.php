@@ -338,12 +338,14 @@
         {{-- Validate --}}
         @if($day->is_validated)
             <button class="validate-btn validated" disabled>✓ Journée validée</button>
+            <button class="validate-btn" style="margin-top:10px; background:#1a1a1a; border:1px solid #2a2a2a; color:#888;" onclick="unvalidateDay('{{ $day->id }}')">
+                ✏️ Modifier
+            </button>
         @else
             <button class="validate-btn" onclick="validateDay('{{ $day->id }}', this)">
                 Valider ma journée →
             </button>
         @endif
-
     </div>
 
     <script>
@@ -390,6 +392,22 @@
             btn.classList.add('validated');
             btn.textContent = '✓ Journée validée';
             document.querySelectorAll('.goal-card').forEach(c => c.classList.add('locked'));
+        }
+
+        async function unvalidateDay(dayId) {
+            await fetch(`/days/${dayId}/unvalidate`, {
+                method: 'PATCH',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                }
+            });
+
+            document.querySelectorAll('.goal-card').forEach(c => {
+                c.classList.remove('locked');
+                c.classList.add('clickable');
+            });
+
+            location.reload();
         }
     </script>
 </x-app-layout>

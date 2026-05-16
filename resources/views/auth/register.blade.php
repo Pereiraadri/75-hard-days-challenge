@@ -12,12 +12,13 @@
             padding: 24px 16px;
         }
 
-        .register-wrap {
+        .auth-wrap {
             width: 100%;
-            max-width: 400px;
+            max-width: 460px !important; /* Harmonisé avec login */
+            transition: max-width 0.2s;
         }
 
-        .register-title {
+        .auth-title {
             font-family: 'Bebas Neue', sans-serif;
             font-size: 64px;
             line-height: 1;
@@ -26,14 +27,14 @@
             margin-bottom: 4px;
         }
 
-        .register-title span {
+        .auth-title span {
             background: linear-gradient(135deg, #ff6b35, #f7c948);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
 
-        .register-sub {
+        .auth-sub {
             text-align: center;
             color: #555;
             font-size: 13px;
@@ -41,11 +42,11 @@
             letter-spacing: .05em;
         }
 
-        .register-card {
+        .auth-card {
             background: #141414;
             border: 1px solid #1e1e1e;
             border-radius: 20px;
-            padding: 28px 24px;
+            padding: 32px 32px; /* Harmonisé avec login */
         }
 
         label {
@@ -70,25 +71,24 @@
             font-family: 'DM Sans', sans-serif;
             transition: border-color .2s;
             outline: none;
+            box-sizing: border-box;
         }
 
-        input[type="text"]:focus,
-        input[type="email"]:focus,
-        input[type="password"]:focus {
+        input:focus {
             border-color: #ff6b35;
             box-shadow: 0 0 0 3px rgba(255,107,53,.1);
         }
 
-        .field { margin-bottom: 16px; }
+        .field { margin-bottom: 20px; }
 
         .field-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 12px;
-            margin-bottom: 16px;
+            margin-bottom: 20px;
         }
 
-        .btn-register {
+        .btn-primary {
             width: 100%;
             padding: 14px;
             border-radius: 12px;
@@ -100,10 +100,13 @@
             font-weight: 500;
             cursor: pointer;
             transition: all .2s;
-            margin-top: 8px;
+            display: block;
+            text-align: center;
+            text-decoration: none;
+            box-sizing: border-box;
         }
 
-        .btn-register:hover {
+        .btn-primary:hover {
             transform: translateY(-1px);
             box-shadow: 0 8px 24px rgba(255,107,53,.3);
         }
@@ -112,7 +115,7 @@
             text-align: center;
             color: #333;
             font-size: 12px;
-            margin: 20px 0;
+            margin: 24px 0;
             position: relative;
         }
 
@@ -128,7 +131,7 @@
         .divider::before { left: 0; }
         .divider::after { right: 0; }
 
-        .btn-login {
+        .btn-secondary {
             width: 100%;
             padding: 14px;
             border-radius: 12px;
@@ -142,25 +145,28 @@
             text-align: center;
             display: block;
             text-decoration: none;
+            box-sizing: border-box;
         }
 
-        .btn-login:hover {
+        .btn-secondary:hover {
             border-color: #ff6b35;
             color: #fff;
         }
 
-        .error-msg {
-            font-size: 11px;
-            color: #f87171;
-            margin-top: 4px;
+        .text-red-600, .error-msg {
+            font-size: 11px !important;
+            color: #f87171 !important;
+            margin-top: 4px !important;
+            list-style: none;
+            padding: 0;
         }
     </style>
 
-    <div class="register-wrap">
-        <h1 class="register-title">75 <span>Hard</span></h1>
-        <p class="register-sub">Crée ton compte pour commencer</p>
+    <div class="auth-wrap">
+        <h1 class="auth-title"><span>75 Hard</span></h1>
+        <p class="auth-sub">Crée ton compte pour commencer</p>
 
-        <div class="register-card">
+        <div class="auth-card">
             <form method="POST" action="{{ route('register') }}" onsubmit="this.querySelector('button[type=submit]').disabled = true;">
                 @csrf
 
@@ -168,38 +174,38 @@
                     <div>
                         <label for="first_name">Prénom</label>
                         <input type="text" id="first_name" name="first_name" value="{{ old('first_name') }}" required autofocus/>
-                        @error('first_name')<p class="error-msg">{{ $message }}</p>@enderror
+                        <x-input-error :messages="$errors->get('first_name')" class="mt-2" />
                     </div>
                     <div>
                         <label for="last_name">Nom</label>
                         <input type="text" id="last_name" name="last_name" value="{{ old('last_name') }}" required/>
-                        @error('last_name')<p class="error-msg">{{ $message }}</p>@enderror
+                        <x-input-error :messages="$errors->get('last_name')" class="mt-2" />
                     </div>
                 </div>
 
                 <div class="field">
                     <label for="email">Email</label>
-                    <input type="email" id="email" name="email" value="{{ old('email') }}" required"/>
-                    @error('email')<p class="error-msg">{{ $message }}</p>@enderror
+                    <input type="email" id="email" name="email" value="{{ old('email') }}" required/>
+                    <x-input-error :messages="$errors->get('email')" class="mt-2" />
                 </div>
 
                 <div class="field">
                     <label for="password">Mot de passe</label>
-                    <input type="password" id="password" name="password" required"/>
-                    @error('password')<p class="error-msg">{{ $message }}</p>@enderror
+                    <input type="password" id="password" name="password" required/>
+                    <x-input-error :messages="$errors->get('password')" class="mt-2" />
                 </div>
 
                 <div class="field">
                     <label for="password_confirmation">Confirmer le mot de passe</label>
-                    <input type="password" id="password_confirmation" name="password_confirmation" required"/>
+                    <input type="password" id="password_confirmation" name="password_confirmation" required/>
                 </div>
 
-                <button type="submit" class="btn-register">Créer mon compte →</button>
+                <button type="submit" class="btn-primary" style="margin-top: 8px;">Créer mon compte →</button>
             </form>
 
             <div class="divider">ou</div>
 
-            <a href="{{ route('login') }}" class="btn-login">J'ai déjà un compte</a>
+            <a href="{{ route('login') }}" class="btn-secondary">J'ai déjà un compte</a>
         </div>
     </div>
 </x-guest-layout>

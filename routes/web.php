@@ -14,8 +14,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('dashboard');
 
     Route::patch('/days/{day}/validate', [DayController::class, 'validate']);
+    Route::patch('/days/{day}/unvalidate', [DayController::class, 'unvalidate']);
     Route::get('/days', [DayController::class, 'calendar'])->name('days.calendar');
     Route::get('/days/{date}', [DayController::class, 'show'])->name('days.show');
+    Route::get('/stats', [DayController::class, 'stats'])->name('days.stats');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');

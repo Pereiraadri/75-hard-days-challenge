@@ -12,12 +12,13 @@
             padding: 24px 16px;
         }
 
-        .login-wrap {
+        .auth-wrap {
             width: 100%;
-            max-width: 400px;
+            max-width: 460px !important; /* Aligné sur la page register */
+            transition: max-width 0.2s;
         }
 
-        .login-title {
+        .auth-title {
             font-family: 'Bebas Neue', sans-serif;
             font-size: 64px;
             line-height: 1;
@@ -26,14 +27,14 @@
             margin-bottom: 4px;
         }
 
-        .login-title span {
+        .auth-title span {
             background: linear-gradient(135deg, #ff6b35, #f7c948);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
 
-        .login-sub {
+        .auth-sub {
             text-align: center;
             color: #555;
             font-size: 13px;
@@ -41,11 +42,11 @@
             letter-spacing: .05em;
         }
 
-        .login-card {
+        .auth-card {
             background: #141414;
             border: 1px solid #1e1e1e;
             border-radius: 20px;
-            padding: 28px 24px;
+            padding: 32px 32px; /* Plus d'espace interne pour l'harmonie */
         }
 
         label {
@@ -57,6 +58,7 @@
             margin-bottom: 8px;
         }
 
+        input[type="text"],
         input[type="email"],
         input[type="password"] {
             width: 100%;
@@ -69,15 +71,15 @@
             font-family: 'DM Sans', sans-serif;
             transition: border-color .2s;
             outline: none;
+            box-sizing: border-box;
         }
 
-        input[type="email"]:focus,
-        input[type="password"]:focus {
+        input:focus {
             border-color: #ff6b35;
             box-shadow: 0 0 0 3px rgba(255,107,53,.1);
         }
 
-        .field { margin-bottom: 16px; }
+        .field { margin-bottom: 20px; } /* Légèrement plus espacé pour le grand format */
 
         .remember {
             display: flex;
@@ -87,10 +89,25 @@
             margin-top: 4px;
         }
 
-        .remember input { width: auto; }
-        .remember span { font-size: 13px; color: #555; }
+        .remember input[type="checkbox"] {
+            appearance: auto;
+            -webkit-appearance: auto;
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+            margin: 0;
+        }
 
-        .btn-login {
+        .remember label {
+            font-size: 13px;
+            color: #555;
+            text-transform: none;
+            letter-spacing: normal;
+            margin-bottom: 0;
+            cursor: pointer;
+        }
+
+        .btn-primary {
             width: 100%;
             padding: 14px;
             border-radius: 12px;
@@ -102,9 +119,13 @@
             font-weight: 500;
             cursor: pointer;
             transition: all .2s;
+            display: block;
+            text-align: center;
+            text-decoration: none;
+            box-sizing: border-box;
         }
 
-        .btn-login:hover {
+        .btn-primary:hover {
             transform: translateY(-1px);
             box-shadow: 0 8px 24px rgba(255,107,53,.3);
         }
@@ -113,7 +134,7 @@
             text-align: center;
             color: #333;
             font-size: 12px;
-            margin: 20px 0;
+            margin: 24px 0;
             position: relative;
         }
 
@@ -129,7 +150,7 @@
         .divider::before { left: 0; }
         .divider::after { right: 0; }
 
-        .btn-register {
+        .btn-secondary {
             width: 100%;
             padding: 14px;
             border-radius: 12px;
@@ -143,9 +164,10 @@
             text-align: center;
             display: block;
             text-decoration: none;
+            box-sizing: border-box;
         }
 
-        .btn-register:hover {
+        .btn-secondary:hover {
             border-color: #ff6b35;
             color: #fff;
         }
@@ -161,15 +183,23 @@
         }
 
         .forgot:hover { color: #ff6b35; }
+
+        .text-red-600, .error-msg {
+            font-size: 11px !important;
+            color: #f87171 !important;
+            margin-top: 4px !important;
+            list-style: none;
+            padding: 0;
+        }
     </style>
 
-    <div class="login-wrap">
-        <h1 class="login-title">75 <span>Hard</span></h1>
-        <p class="login-sub">Connecte-toi pour continuer</p>
+    <div class="auth-wrap">
+        <h1 class="auth-title"><span>75 Hard</span></h1>
+        <p class="auth-sub">Connecte-toi pour continuer</p>
 
         <x-auth-session-status class="mb-4" :status="session('status')" />
 
-        <div class="login-card">
+        <div class="auth-card">
             <form method="POST" action="{{ route('login') }}">
                 @csrf
 
@@ -187,15 +217,15 @@
 
                 <div class="remember">
                     <input id="remember_me" type="checkbox" name="remember">
-                    <span>Se souvenir de moi</span>
+                    <label for="remember_me">Se souvenir de moi</label>
                 </div>
 
-                <button type="submit" class="btn-login">Se connecter</button>
+                <button type="submit" class="btn-primary">Se connecter</button>
             </form>
 
             <div class="divider">ou</div>
 
-            <a href="{{ route('register') }}" class="btn-register">Créer un compte</a>
+            <a href="{{ route('register') }}" class="btn-secondary">Créer un compte</a>
 
             @if (Route::has('password.request'))
                 <a href="{{ route('password.request') }}" class="forgot">Mot de passe oublié ?</a>
