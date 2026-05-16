@@ -130,7 +130,7 @@ class DayController extends Controller
         $user = auth()->user();
         $startDate = $user->challenge->start_date;
         $userDays = $user->days->mapWithKeys(fn($day) => [
-            $day->date->format('Y-m-d') => [
+            \Carbon\Carbon::parse($day->date)->format('Y-m-d') => [
                 'id' => $day->id,
                 'is_validated' => $day->is_validated,
             ]
