@@ -285,6 +285,5 @@
                 </div>
             </div>
         @endforeach
-
     </div>
 </x-app-layout>
