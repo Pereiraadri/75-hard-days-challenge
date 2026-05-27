@@ -67,7 +67,7 @@ class DayController extends Controller
                 'date' => $dayParam,
             ]);
 
-            $goals = Goal::where('user_id',  null)->get();
+            $goals = Goal::where('user_id', null)->get();
 
             foreach ($goals as $goal) {
                 DayGoal::create(['day_id' => $day->id, 'goal_id' => $goal->id]);
@@ -142,17 +142,18 @@ class DayController extends Controller
 
     public function stats()
     {
-        $totalPossible = DayGoal::whereHas('day', fn($q) =>
-        $q->where('user_id', auth()->id())
-        )->count();
+        $startDate = auth()->user()->challenge->start_date;
 
-        $totalCompleted = DayGoal::whereHas('day', fn($q) =>
-        $q->where('user_id', auth()->id())
-        )->where('completed', true)->count();
+        $totalPossible = DayGoal::whereHas('day', fn($q) => $q->where('user_id', auth()->id())
+            ->where('date', '>=', $startDate))->count();
 
-        $byGoal = Goal::whereNull('user_id')->get()->map(function($goal) {
+        $totalCompleted = DayGoal::whereHas('day', fn($q) => $q->where('user_id', auth()->id())
+            ->where('date', '>=', $startDate))->where('completed', true)->count();
+
+        $byGoal = Goal::whereNull('user_id')->get()->map(function ($goal) use ($startDate) {
             $dayGoals = DayGoal::where('goal_id', $goal->id)
-                ->whereHas('day', fn($q) => $q->where('user_id', auth()->id()))
+                ->whereHas('day', fn($q) => $q->where('user_id', auth()->id())
+                    ->where('date', '>=', $startDate))
                 ->get();
 
             $goal->total = $dayGoals->count();
