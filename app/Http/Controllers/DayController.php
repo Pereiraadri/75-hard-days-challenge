@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Day;
 use App\Models\DayGoal;
 use App\Models\Goal;
+use Carbon\CarbonImmutable;
+use Carbon\Exceptions\InvalidFormatException;
 use Illuminate\Support\Str;
 
 class DayController extends Controller
@@ -26,7 +28,10 @@ class DayController extends Controller
         if (Str::isUuid($dayParam)) {
             $day = Day::findOrFail($dayParam);
         } else {
-            $day = Day::firstOrCreate(['user_id' => auth()->id(), 'date' => $dayParam]);
+            $day = Day::firstOrCreate([
+                'user_id' => auth()->id(),
+                'date' => $this->parseDate($dayParam),
+            ]);
 
             $this->attachSharedGoals($day);
         }
@@ -128,6 +133,15 @@ class DayController extends Controller
     private function percentage(int $completed, int $total): int
     {
         return $total > 0 ? (int) round($completed / $total * 100) : 0;
+    }
+
+    private function parseDate(string $date): CarbonImmutable
+    {
+        try {
+            return CarbonImmutable::parse($date)->startOfDay();
+        } catch (InvalidFormatException) {
+            abort(404);
+        }
     }
 
     private function attachSharedGoals(Day $day): void

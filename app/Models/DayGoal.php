@@ -15,8 +15,14 @@ use Illuminate\Database\Eloquent\Relations\Pivot;
 ])]
 class DayGoal extends Pivot
 {
-
     use HasFactory, HasUuids;
+
+    protected function casts(): array
+    {
+        return [
+            'completed' => 'boolean',
+        ];
+    }
 
     public function day(): BelongsTo
     {
