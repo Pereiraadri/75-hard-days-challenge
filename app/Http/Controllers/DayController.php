@@ -33,6 +33,7 @@ class DayController extends Controller
         } else {
             $date = $this->parseDate($dayParam);
 
+            abort_if($date->isFuture(), 404);
             abort_unless($challenge->covers($date), 404);
 
             $day = $this->openDay($date);

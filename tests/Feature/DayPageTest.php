@@ -102,15 +102,26 @@ class DayPageTest extends TestCase
         $this->assertDatabaseCount('days', 0);
     }
 
-    public function test_the_last_day_of_the_challenge_can_still_be_opened(): void
+    public function test_a_day_the_user_has_not_reached_yet_is_not_found(): void
     {
         $user = $this->userWithChallengeStartingOn('2026-09-10');
 
         $this->actingAs($user)
-            ->get(route('days.show', ['date' => '2026-11-23']))
+            ->get(route('days.show', ['date' => '2026-09-21']))
+            ->assertNotFound();
+
+        $this->assertDatabaseCount('days', 0);
+    }
+
+    public function test_the_last_elapsed_day_can_still_be_opened(): void
+    {
+        $user = $this->userWithChallengeStartingOn('2026-09-10');
+
+        $this->actingAs($user)
+            ->get(route('days.show', ['date' => '2026-09-20']))
             ->assertOk();
 
-        $this->assertTrue($user->days()->whereDate('date', '2026-11-23')->exists());
+        $this->assertTrue($user->days()->whereDate('date', '2026-09-20')->exists());
     }
 
     public function test_a_user_cannot_open_the_day_of_another_user(): void
