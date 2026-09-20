@@ -5,162 +5,137 @@ namespace App\Http\Controllers;
 use App\Models\Day;
 use App\Models\DayGoal;
 use App\Models\Goal;
-use Carbon\Carbon;
-use Carbon\CarbonPeriod;
-use Illuminate\Http\Request;
-use Str;
-use function Laravel\Prompts\error;
+use Illuminate\Support\Str;
 
 class DayController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        $day = Day::firstOrCreate(
-            ['user_id' => auth()->id(), 'date' => today()],
-        );
+        $day = Day::firstOrCreate(['user_id' => auth()->id(), 'date' => today()]);
 
-        if ($day->wasRecentlyCreated) {
-            $goals = Goal::whereNull('user_id')->get();
-            foreach ($goals as $goal) {
-                DayGoal::create([
-                    'day_id' => $day->id,
-                    'goal_id' => $goal->id,
-                    'completed' => false,
-                ]);
-            }
-        }
+        $this->attachSharedGoals($day);
 
-        $dayGoals = $day->goals()->withPivot('completed')->get();
-        return view('dashboard', compact('day', 'dayGoals'));
+        return view('dashboard', [
+            'challenge' => auth()->user()->challenge,
+            'day' => $day->load('goals'),
+        ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     */
     public function show($dayParam)
     {
         if (Str::isUuid($dayParam)) {
             $day = Day::findOrFail($dayParam);
-            $dayGoals = $day->goals()->withPivot('completed')->get();
         } else {
-            $day = Day::firstOrCreate([
-                'user_id' => auth()->id(),
-                'date' => $dayParam,
-            ]);
+            $day = Day::firstOrCreate(['user_id' => auth()->id(), 'date' => $dayParam]);
 
-            $goals = Goal::where('user_id', null)->get();
-
-            foreach ($goals as $goal) {
-                DayGoal::create(['day_id' => $day->id, 'goal_id' => $goal->id]);
-            }
-
-            $dayGoals = $day->goals()->withPivot('completed')->get();
-
+            $this->attachSharedGoals($day);
         }
 
-        return view('days.show', compact('day', 'dayGoals'));
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Day $day)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Day $day)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Day $day)
-    {
-        //
+        return view('days.show', [
+            'challenge' => auth()->user()->challenge,
+            'day' => $day->load('goals'),
+        ]);
     }
 
     public function validate(Day $day)
     {
         if ($day->user_id === auth()->id()) {
-            $day->update([
-                'is_validated' => true,
-            ]);
+            $day->update(['is_validated' => true]);
 
-            return response()->json(['message' => 'Bien joué, rendez-vous demain !']);
+            return response()->json(['is_validated' => true]);
         }
 
-        return response('nul');
+        abort(403);
     }
 
     public function unvalidate(Day $day)
     {
         if ($day->user_id === auth()->id()) {
             $day->update(['is_validated' => false]);
-            return response()->json(['success' => true]);
+
+            return response()->json(['is_validated' => false]);
         }
+
+        abort(403);
     }
 
     public function calendar()
     {
-        $user = auth()->user();
-        $startDate = $user->challenge->start_date;
-        $userDays = $user->days->mapWithKeys(fn($day) => [
-            \Carbon\Carbon::parse($day->date)->format('Y-m-d') => [
-                'id' => $day->id,
-                'is_validated' => $day->is_validated,
-            ]
-        ])->toArray();
-        $dates = CarbonPeriod::create($startDate, now())->toArray();
+        $challenge = auth()->user()->challenge;
 
-        return view('days.calendar', compact('dates', 'userDays', 'startDate'));
+        $daysByDate = auth()->user()->days
+            ->mapWithKeys(fn (Day $day) => [$day->date->toDateString() => $day]);
+
+        $elapsedDates = $challenge->hasStarted()
+            ? collect($challenge->elapsedDates()->toArray())
+            : collect();
+
+        $isValidated = fn ($date) => (bool) $daysByDate->get($date->toDateString())?->is_validated;
+
+        return view('days.calendar', [
+            'challenge' => $challenge,
+            'challengeDates' => $challenge->dates()->toArray(),
+            'daysByDate' => $daysByDate,
+            'validatedDaysCount' => $elapsedDates->filter($isValidated)->count(),
+            'missedDaysCount' => $elapsedDates
+                ->reject(fn ($date) => $date->isToday())
+                ->reject($isValidated)
+                ->count(),
+        ]);
     }
 
     public function stats()
     {
-        $startDate = auth()->user()->challenge->start_date;
+        $challenge = auth()->user()->challenge;
+        $startDate = $challenge->start_date;
 
-        $totalPossible = DayGoal::whereHas('day', fn($q) => $q->where('user_id', auth()->id())
-            ->where('date', '>=', $startDate))->count();
+        $trackedGoals = DayGoal::whereHas(
+            'day',
+            fn ($query) => $query->where('user_id', auth()->id())->where('date', '>=', $startDate)
+        );
 
-        $totalCompleted = DayGoal::whereHas('day', fn($q) => $q->where('user_id', auth()->id())
-            ->where('date', '>=', $startDate))->where('completed', true)->count();
-
-        $byGoal = Goal::whereNull('user_id')->get()->map(function ($goal) use ($startDate) {
+        $goalCompletionRates = Goal::shared()->get()->map(function (Goal $goal) use ($startDate) {
             $dayGoals = DayGoal::where('goal_id', $goal->id)
-                ->whereHas('day', fn($q) => $q->where('user_id', auth()->id())
-                    ->where('date', '>=', $startDate))
+                ->whereHas(
+                    'day',
+                    fn ($query) => $query->where('user_id', auth()->id())->where('date', '>=', $startDate)
+                )
                 ->get();
 
-            $goal->total = $dayGoals->count();
-            $goal->completed = $dayGoals->where('completed', true)->count();
-            return $goal;
+            $trackedCount = $dayGoals->count();
+            $completedCount = $dayGoals->where('completed', true)->count();
+
+            return [
+                'goal' => $goal,
+                'tracked' => $trackedCount,
+                'completed' => $completedCount,
+                'percentage' => $this->percentage($completedCount, $trackedCount),
+            ];
         });
 
-        return view('days.stats', compact('totalPossible', 'totalCompleted', 'byGoal'));
+        $trackedGoalsCount = (clone $trackedGoals)->count();
+        $completedGoalsCount = (clone $trackedGoals)->where('completed', true)->count();
+
+        return view('days.stats', [
+            'challenge' => $challenge,
+            'trackedGoalsCount' => $trackedGoalsCount,
+            'completedGoalsCount' => $completedGoalsCount,
+            'completionPercentage' => $this->percentage($completedGoalsCount, $trackedGoalsCount),
+            'goalCompletionRates' => $goalCompletionRates,
+        ]);
+    }
+
+    private function percentage(int $completed, int $total): int
+    {
+        return $total > 0 ? (int) round($completed / $total * 100) : 0;
+    }
+
+    private function attachSharedGoals(Day $day): void
+    {
+        if (! $day->wasRecentlyCreated) {
+            return;
+        }
+
+        $day->goals()->attach(Goal::shared()->pluck('id'));
     }
 }
