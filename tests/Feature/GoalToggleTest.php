@@ -74,6 +74,19 @@ class GoalToggleTest extends TestCase
 
     public function test_a_user_cannot_toggle_a_goal_of_another_users_day(): void
     {
-        $this->markTestSkipped('DayGoalController::toggle has no ownership check yet.');
+        $user = $this->userWithChallengeStartingOn('2026-09-10');
+        $day = Day::factory()->create();
+        $goal = Goal::factory()->create();
+        $day->goals()->attach($goal);
+
+        $this->actingAs($user)
+            ->patchJson(route('day-goals.toggle', [$day, $goal]))
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('day_goal', [
+            'day_id' => $day->id,
+            'goal_id' => $goal->id,
+            'completed' => false,
+        ]);
     }
 }

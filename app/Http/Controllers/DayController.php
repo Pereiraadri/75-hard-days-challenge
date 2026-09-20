@@ -44,24 +44,20 @@ class DayController extends Controller
 
     public function validate(Day $day)
     {
-        if ($day->user_id === auth()->id()) {
-            $day->update(['is_validated' => true]);
+        $this->authorize('update', $day);
 
-            return response()->json(['is_validated' => true]);
-        }
+        $day->update(['is_validated' => true]);
 
-        abort(403);
+        return response()->json(['is_validated' => true]);
     }
 
     public function unvalidate(Day $day)
     {
-        if ($day->user_id === auth()->id()) {
-            $day->update(['is_validated' => false]);
+        $this->authorize('update', $day);
 
-            return response()->json(['is_validated' => false]);
-        }
+        $day->update(['is_validated' => false]);
 
-        abort(403);
+        return response()->json(['is_validated' => false]);
     }
 
     public function calendar()
