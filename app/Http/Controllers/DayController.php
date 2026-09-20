@@ -23,10 +23,12 @@ class DayController extends Controller
         ]);
     }
 
-    public function show($dayParam)
+    public function show(string $dayParam)
     {
         if (Str::isUuid($dayParam)) {
             $day = Day::findOrFail($dayParam);
+
+            $this->authorize('view', $day);
         } else {
             $day = Day::firstOrCreate([
                 'user_id' => auth()->id(),

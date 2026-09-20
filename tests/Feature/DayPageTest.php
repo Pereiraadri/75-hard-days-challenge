@@ -80,6 +80,16 @@ class DayPageTest extends TestCase
             ->assertSee('6');
     }
 
+    public function test_a_user_cannot_open_the_day_of_another_user(): void
+    {
+        $user = $this->userWithChallengeStartingOn('2026-09-10');
+        $day = Day::factory()->on('2026-09-15')->create();
+
+        $this->actingAs($user)
+            ->get(route('days.show', $day))
+            ->assertForbidden();
+    }
+
     public function test_a_validated_day_offers_to_edit_it_again(): void
     {
         $user = $this->userWithChallengeStartingOn('2026-09-10');
