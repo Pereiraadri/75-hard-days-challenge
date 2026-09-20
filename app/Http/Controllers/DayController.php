@@ -7,61 +7,59 @@ use App\Models\DayGoal;
 use App\Models\Goal;
 use Carbon\CarbonImmutable;
 use Carbon\Exceptions\InvalidFormatException;
+use DateTimeInterface;
 use Illuminate\Support\Str;
 
 class DayController extends Controller
 {
     public function index()
     {
-        $day = Day::firstOrCreate(['user_id' => auth()->id(), 'date' => today()]);
-
-        $this->attachSharedGoals($day);
+        $challenge = auth()->user()->challenge;
 
         return view('dashboard', [
-            'challenge' => auth()->user()->challenge,
-            'day' => $day->load('goals'),
+            'challenge' => $challenge,
+            'day' => $challenge->covers(today()) ? $this->openDay(today())->load('goals') : null,
         ]);
     }
 
-    public function show($dayParam)
+    public function show(string $dayParam)
     {
+        $challenge = auth()->user()->challenge;
+
         if (Str::isUuid($dayParam)) {
             $day = Day::findOrFail($dayParam);
-        } else {
-            $day = Day::firstOrCreate([
-                'user_id' => auth()->id(),
-                'date' => $this->parseDate($dayParam),
-            ]);
 
-            $this->attachSharedGoals($day);
+            $this->authorize('view', $day);
+        } else {
+            $date = $this->parseDate($dayParam);
+
+            abort_unless($challenge->covers($date), 404);
+
+            $day = $this->openDay($date);
         }
 
         return view('days.show', [
-            'challenge' => auth()->user()->challenge,
+            'challenge' => $challenge,
             'day' => $day->load('goals'),
         ]);
     }
 
     public function validate(Day $day)
     {
-        if ($day->user_id === auth()->id()) {
-            $day->update(['is_validated' => true]);
+        $this->authorize('update', $day);
 
-            return response()->json(['is_validated' => true]);
-        }
+        $day->update(['is_validated' => true]);
 
-        abort(403);
+        return response()->json(['is_validated' => true]);
     }
 
     public function unvalidate(Day $day)
     {
-        if ($day->user_id === auth()->id()) {
-            $day->update(['is_validated' => false]);
+        $this->authorize('update', $day);
 
-            return response()->json(['is_validated' => false]);
-        }
+        $day->update(['is_validated' => false]);
 
-        abort(403);
+        return response()->json(['is_validated' => false]);
     }
 
     public function calendar()
@@ -144,12 +142,14 @@ class DayController extends Controller
         }
     }
 
-    private function attachSharedGoals(Day $day): void
+    private function openDay(DateTimeInterface $date): Day
     {
-        if (! $day->wasRecentlyCreated) {
-            return;
+        $day = Day::firstOrCreate(['user_id' => auth()->id(), 'date' => $date]);
+
+        if ($day->wasRecentlyCreated) {
+            $day->goals()->attach(Goal::shared()->pluck('id'));
         }
 
-        $day->goals()->attach(Goal::shared()->pluck('id'));
+        return $day;
     }
 }

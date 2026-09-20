@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\ChallengeStatus;
+use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Carbon\CarbonPeriod;
 use DateTimeInterface;
@@ -47,6 +48,18 @@ class Challenge extends Model
     public function hasStarted(): bool
     {
         return $this->start_date->startOfDay()->lessThanOrEqualTo(today());
+    }
+
+    public function hasEnded(): bool
+    {
+        return today()->greaterThan($this->endDate());
+    }
+
+    public function covers(DateTimeInterface|string $date): bool
+    {
+        return CarbonImmutable::parse($date)
+            ->startOfDay()
+            ->betweenIncluded($this->start_date, $this->endDate());
     }
 
     public function daysUntilStart(): int

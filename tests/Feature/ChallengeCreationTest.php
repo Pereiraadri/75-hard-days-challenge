@@ -82,4 +82,25 @@ class ChallengeCreationTest extends TestCase
 
         $this->actingAs($user)->get(route('dashboard'))->assertOk();
     }
+
+    public function test_a_user_who_already_has_a_challenge_is_sent_away_from_the_form(): void
+    {
+        $user = $this->userWithChallengeStartingOn('2026-09-10');
+
+        $this->actingAs($user)
+            ->get(route('challenges.create'))
+            ->assertRedirect(route('dashboard'));
+    }
+
+    public function test_a_user_cannot_start_a_second_challenge(): void
+    {
+        $user = $this->userWithChallengeStartingOn('2026-09-10');
+
+        $this->actingAs($user)
+            ->post(route('challenges.store'), ['start_date' => '2026-11-01'])
+            ->assertRedirect(route('dashboard'));
+
+        $this->assertDatabaseCount('challenges', 1);
+        $this->assertTrue($user->challenge()->whereDate('start_date', '2026-09-10')->exists());
+    }
 }

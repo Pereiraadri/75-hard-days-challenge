@@ -80,6 +80,49 @@ class DayPageTest extends TestCase
             ->assertSee('6');
     }
 
+    public function test_a_date_before_the_challenge_is_not_found(): void
+    {
+        $user = $this->userWithChallengeStartingOn('2026-09-10');
+
+        $this->actingAs($user)
+            ->get(route('days.show', ['date' => '2026-09-09']))
+            ->assertNotFound();
+
+        $this->assertDatabaseCount('days', 0);
+    }
+
+    public function test_a_date_after_the_challenge_is_not_found(): void
+    {
+        $user = $this->userWithChallengeStartingOn('2026-09-10');
+
+        $this->actingAs($user)
+            ->get(route('days.show', ['date' => '2026-11-24']))
+            ->assertNotFound();
+
+        $this->assertDatabaseCount('days', 0);
+    }
+
+    public function test_the_last_day_of_the_challenge_can_still_be_opened(): void
+    {
+        $user = $this->userWithChallengeStartingOn('2026-09-10');
+
+        $this->actingAs($user)
+            ->get(route('days.show', ['date' => '2026-11-23']))
+            ->assertOk();
+
+        $this->assertTrue($user->days()->whereDate('date', '2026-11-23')->exists());
+    }
+
+    public function test_a_user_cannot_open_the_day_of_another_user(): void
+    {
+        $user = $this->userWithChallengeStartingOn('2026-09-10');
+        $day = Day::factory()->on('2026-09-15')->create();
+
+        $this->actingAs($user)
+            ->get(route('days.show', $day))
+            ->assertForbidden();
+    }
+
     public function test_a_validated_day_offers_to_edit_it_again(): void
     {
         $user = $this->userWithChallengeStartingOn('2026-09-10');
