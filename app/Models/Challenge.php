@@ -16,7 +16,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 #[Fillable([
     'user_id',
     'start_date',
-    'status'
+    'status',
 ])]
 class Challenge extends Model
 {

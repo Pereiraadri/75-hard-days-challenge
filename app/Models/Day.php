@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 #[Fillable([
     'date',
     'is_validated',
-    'user_id'
+    'user_id',
 ])]
 class Day extends Model
 {

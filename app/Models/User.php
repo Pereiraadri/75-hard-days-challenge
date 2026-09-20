@@ -16,13 +16,15 @@ use Illuminate\Notifications\Notifiable;
     'first_name',
     'last_name',
     'email',
-    'password'
+    'password',
 ])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable, HasUuids;
+    use HasFactory, HasUuids, Notifiable;
+
     protected $keyType = 'string';
+
     public $incrementing = false;
 
     /**
