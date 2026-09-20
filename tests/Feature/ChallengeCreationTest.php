@@ -6,6 +6,7 @@ use App\ChallengeStatus;
 use App\Models\Goal;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 use Tests\Concerns\InteractsWithChallenges;
 use Tests\TestCase;
@@ -13,6 +14,13 @@ use Tests\TestCase;
 class ChallengeCreationTest extends TestCase
 {
     use InteractsWithChallenges, RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->travelTo(Carbon::parse('2026-09-20'));
+    }
 
     public function test_guests_are_redirected_to_the_login_screen(): void
     {
@@ -74,6 +82,26 @@ class ChallengeCreationTest extends TestCase
             ->assertSessionHasErrors('start_date');
 
         $this->assertDatabaseCount('challenges', 0);
+    }
+
+    public function test_the_start_date_cannot_be_in_the_past(): void
+    {
+        $this->actingAs(User::factory()->create())
+            ->post(route('challenges.store'), ['start_date' => '2026-09-19'])
+            ->assertSessionHasErrors('start_date');
+
+        $this->assertDatabaseCount('challenges', 0);
+    }
+
+    public function test_the_challenge_can_start_today(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->post(route('challenges.store'), ['start_date' => '2026-09-20'])
+            ->assertSessionHasNoErrors();
+
+        $this->assertTrue($user->challenge()->whereDate('start_date', '2026-09-20')->exists());
     }
 
     public function test_a_user_who_already_has_a_challenge_skips_the_form(): void

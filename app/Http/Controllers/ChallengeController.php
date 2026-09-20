@@ -22,7 +22,7 @@ class ChallengeController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'start_date' => ['required', 'date'],
+            'start_date' => ['required', 'date', 'after_or_equal:today'],
         ]);
 
         $request->user()->challenge()->firstOrCreate(
