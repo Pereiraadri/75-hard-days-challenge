@@ -79,6 +79,45 @@ class DashboardTest extends TestCase
             ->assertSee(trans_choice('Starts in :count day|Starts in :count days', 3, ['count' => 3]));
     }
 
+    public function test_it_tracks_nothing_before_the_challenge_starts(): void
+    {
+        $user = $this->userWithChallengeStartingOn('2026-09-23');
+        $this->sharedGoals();
+
+        $this->actingAs($user)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee(__('Your challenge has not started yet'))
+            ->assertDontSee('data-day-tracker', escape: false);
+
+        $this->assertDatabaseCount('days', 0);
+    }
+
+    public function test_it_tracks_nothing_once_the_challenge_is_over(): void
+    {
+        $user = $this->userWithChallengeStartingOn('2026-06-01');
+        $this->sharedGoals();
+
+        $this->actingAs($user)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee(__('Challenge complete'))
+            ->assertDontSee('data-day-tracker', escape: false);
+
+        $this->assertDatabaseCount('days', 0);
+    }
+
+    public function test_it_does_not_count_past_the_last_day_of_the_challenge(): void
+    {
+        $user = $this->userWithChallengeStartingOn('2026-06-01');
+
+        $this->actingAs($user)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee(__('days completed'))
+            ->assertDontSee('112');
+    }
+
     public function test_a_validated_day_locks_its_goals(): void
     {
         $user = $this->userWithChallengeStartingOn('2026-09-10');

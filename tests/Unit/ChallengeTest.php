@@ -41,6 +41,23 @@ class ChallengeTest extends TestCase
         $this->assertFalse($this->startingOn('2026-09-21')->hasStarted());
     }
 
+    public function test_it_has_ended_once_the_last_day_is_behind_us(): void
+    {
+        $this->assertFalse($this->startingOn('2026-09-11')->hasEnded());
+        $this->assertFalse($this->startingOn('2026-07-08')->hasEnded());
+        $this->assertTrue($this->startingOn('2026-07-07')->hasEnded());
+    }
+
+    public function test_it_covers_the_dates_from_its_first_to_its_last_day(): void
+    {
+        $challenge = $this->startingOn(self::TODAY);
+
+        $this->assertTrue($challenge->covers(self::TODAY));
+        $this->assertTrue($challenge->covers('2026-12-03'));
+        $this->assertFalse($challenge->covers('2026-09-19'));
+        $this->assertFalse($challenge->covers('2026-12-04'));
+    }
+
     public function test_it_counts_the_days_left_before_it_starts(): void
     {
         $this->assertSame(3, $this->startingOn('2026-09-23')->daysUntilStart());
