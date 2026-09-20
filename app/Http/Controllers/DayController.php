@@ -33,6 +33,7 @@ class DayController extends Controller
         } else {
             $date = $this->parseDate($dayParam);
 
+            abort_if($date->isFuture(), 404);
             abort_unless($challenge->covers($date), 404);
 
             $day = $this->openDay($date);
@@ -90,23 +91,20 @@ class DayController extends Controller
     public function stats()
     {
         $challenge = auth()->user()->challenge;
-        $startDate = $challenge->start_date;
 
-        $trackedGoals = DayGoal::whereHas(
-            'day',
-            fn ($query) => $query->where('user_id', auth()->id())->where('date', '>=', $startDate)
-        );
+        $countsByGoal = DayGoal::query()
+            ->selectRaw('goal_id, count(*) as tracked_count, sum(completed) as completed_count')
+            ->whereHas('day', fn ($query) => $query
+                ->where('user_id', auth()->id())
+                ->where('date', '>=', $challenge->start_date))
+            ->groupBy('goal_id')
+            ->get()
+            ->keyBy('goal_id');
 
-        $goalCompletionRates = Goal::shared()->get()->map(function (Goal $goal) use ($startDate) {
-            $dayGoals = DayGoal::where('goal_id', $goal->id)
-                ->whereHas(
-                    'day',
-                    fn ($query) => $query->where('user_id', auth()->id())->where('date', '>=', $startDate)
-                )
-                ->get();
-
-            $trackedCount = $dayGoals->count();
-            $completedCount = $dayGoals->where('completed', true)->count();
+        $goalCompletionRates = Goal::shared()->get()->map(function (Goal $goal) use ($countsByGoal) {
+            $counts = $countsByGoal->get($goal->id);
+            $trackedCount = (int) ($counts?->tracked_count ?? 0);
+            $completedCount = (int) ($counts?->completed_count ?? 0);
 
             return [
                 'goal' => $goal,
@@ -116,8 +114,8 @@ class DayController extends Controller
             ];
         });
 
-        $trackedGoalsCount = (clone $trackedGoals)->count();
-        $completedGoalsCount = (clone $trackedGoals)->where('completed', true)->count();
+        $trackedGoalsCount = $goalCompletionRates->sum('tracked');
+        $completedGoalsCount = $goalCompletionRates->sum('completed');
 
         return view('days.stats', [
             'challenge' => $challenge,

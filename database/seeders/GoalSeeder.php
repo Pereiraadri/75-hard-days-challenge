@@ -11,7 +11,7 @@ class GoalSeeder extends Seeder
     {
         $sharedGoals = [
             ['title' => 'eat', 'body' => 'eat healthy', 'icon' => '🥗'],
-            ['title' => 'alcool', 'body' => 'zero alcool', 'icon' => '🚫'],
+            ['title' => 'alcohol', 'body' => 'no alcohol', 'icon' => '🚫'],
             ['title' => 'outdoor_sport_session', 'body' => 'outdoor sport session ( minimum 30 minutes )', 'icon' => '🏃'],
             ['title' => 'indoor_sport_session', 'body' => 'indoor sport session ( minimum 30 minutes )', 'icon' => '🏠'],
             ['title' => 'water', 'body' => 'drink 3 liters of water', 'icon' => '💧'],
@@ -19,8 +19,8 @@ class GoalSeeder extends Seeder
 
         foreach ($sharedGoals as $position => $goal) {
             Goal::updateOrCreate(
-                ['title' => $goal['title'], 'user_id' => null],
-                [...$goal, 'position' => $position],
+                ['position' => $position, 'user_id' => null],
+                $goal,
             );
         }
     }

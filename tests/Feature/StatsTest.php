@@ -6,6 +6,7 @@ use App\Models\Day;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Tests\Concerns\InteractsWithChallenges;
 use Tests\TestCase;
@@ -83,6 +84,31 @@ class StatsTest extends TestCase
             ->assertOk()
             ->assertSee(__(Str::headline($goals[0]->title)))
             ->assertSee(__(Str::headline($goals[1]->title)));
+    }
+
+    public function test_it_reads_every_goal_score_in_a_single_query(): void
+    {
+        $user = $this->userWithChallengeStartingOn('2026-09-10');
+        $goals = $this->sharedGoals(5);
+
+        $day = Day::factory()->on('2026-09-11')->create(['user_id' => $user->id]);
+
+        foreach ($goals as $goal) {
+            $day->goals()->attach($goal, ['completed' => true]);
+        }
+
+        $this->actingAs($user);
+
+        DB::enableQueryLog();
+        $this->get(route('days.stats'))->assertOk();
+        $queries = DB::getQueryLog();
+        DB::disableQueryLog();
+
+        $queriesOnTrackedGoals = collect($queries)
+            ->filter(fn (array $query) => str_contains($query['query'], 'day_goal'))
+            ->count();
+
+        $this->assertSame(1, $queriesOnTrackedGoals);
     }
 
     public function test_it_only_counts_the_days_of_the_signed_in_user(): void
