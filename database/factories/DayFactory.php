@@ -7,20 +7,29 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends Factory<day>
+ * @extends Factory<Day>
  */
 class DayFactory extends Factory
 {
     /**
-     * Define the model's default state.
-     *
      * @return array<string, mixed>
      */
     public function definition(): array
     {
         return [
-            'date' => $this->faker->date(),
             'user_id' => User::factory(),
+            'date' => today(),
+            'is_validated' => false,
         ];
+    }
+
+    public function validated(): static
+    {
+        return $this->state(fn () => ['is_validated' => true]);
+    }
+
+    public function on(string $date): static
+    {
+        return $this->state(fn () => ['date' => $date]);
     }
 }

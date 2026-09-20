@@ -1,7 +1,4 @@
-import './bootstrap';
+import initDayTracker from './day-tracker';
+import './service-worker-registration';
 
-import Alpine from 'alpinejs';
-
-window.Alpine = Alpine;
-
-Alpine.start();
+initDayTracker();

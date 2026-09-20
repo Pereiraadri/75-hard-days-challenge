@@ -18,16 +18,30 @@ class Day extends Model
 {
     use HasFactory, HasUuids;
 
+    protected function casts(): array
+    {
+        return [
+            'date' => 'date',
+            'is_validated' => 'boolean',
+        ];
+    }
+
     public function goals(): BelongsToMany
     {
         return $this->belongsToMany(Goal::class)
             ->using(DayGoal::class)
             ->withPivot(['completed'])
-            ->withTimestamps();
+            ->withTimestamps()
+            ->orderBy('position');
     }
 
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function completedGoalsCount(): int
+    {
+        return $this->goals->where('pivot.completed', true)->count();
     }
 }
